@@ -12,6 +12,12 @@ pub async fn process_command(state: Arc<GameState>, player_id: &str, cmd: &str) 
 
     match parts[0].to_lowercase().as_str() {
         "look" => handle_look(state, player_id).await,
+        "north" | "n" => handle_move(state, player_id, "north").await,
+        "south" | "s" => handle_move(state, player_id, "south").await,
+        "east" | "e" => handle_move(state, player_id, "east").await,
+        "west" | "w" => handle_move(state, player_id, "west").await,
+        "up" | "u" => handle_move(state, player_id, "up").await,
+        "down" | "d" => handle_move(state, player_id, "down").await,
         "say" => handle_say(state, player_id, &parts).await,
         "inventory" | "inv" => handle_inventory(state, player_id).await,
         "help" => handle_help().await,
@@ -28,8 +34,9 @@ async fn handle_look(state: Arc<GameState>, player_id: &str) -> String {
     let room = state.get_room(&player.current_location).await.unwrap();
     let objects = state.get_objects_in_container(&room.id).await.unwrap();
     let players = state.get_players_in_room(&room.id).await.unwrap();
+    let exits = state.get_exits(&room.id).await.unwrap();
 
-    let mut response = format!("{}\n{}\n\n", room.name, room.description);
+    let mut response = format!("{}\n{}\n", room.name, room.description);
     
     if !objects.is_empty() {
         response.push_str("You see:\n");
@@ -49,7 +56,42 @@ async fn handle_look(state: Arc<GameState>, player_id: &str) -> String {
         }
     }
 
+    // Show exits
+    if !exits.is_empty() {
+        response.push_str("Exits: ");
+        let exit_list: Vec<String> = exits.iter().map(|(dir, _)| dir.clone()).collect();
+        response.push_str(&exit_list.join(", "));
+        response.push_str("\n\n");
+    }
+    // Show an empty line if no exits
+    if exits.is_empty() {
+        response.push_str("Exits: None");
+        response.push_str("\n\n");
+    }
+
     response
+}
+
+async fn handle_move(state: Arc<GameState>, player_id: &str, direction: &str) -> String {
+    let player = player_queries::get_player_by_id(&state.db, player_id)
+        .await
+        .unwrap();
+    let room = state.get_room(&player.current_location).await.unwrap();
+    let exits = state.get_exits(&room.id).await.unwrap();
+    
+    if let Some((_, dest)) = exits.iter().find(|(dir, _)| dir == direction) {
+        state.move_player_to_room(player_id, dest).await.unwrap();
+        
+        // Notify others in old room
+        let msg = format!("{} leaves {}.\n", player.username, direction);
+        let _ = state.broadcast_tx.send(msg);
+        
+        // Auto-look in new room
+        handle_look(state.clone(), player_id).await
+        // process_command(state.clone(), player_id, "look").await
+    } else {
+        format!("You can't go that way.\n")
+    }
 }
 
 async fn handle_say(state: Arc<GameState>, player_id: &str, parts: &[&str]) -> String {
@@ -83,6 +125,7 @@ async fn handle_inventory(state: Arc<GameState>, player_id: &str) -> String {
 async fn handle_help() -> String {
     "Available commands:\n\
      - look: Examine your surroundings\n\
+     - move: type in a direction such as 'west' or 'w' if an exit exists\n\
      - say <message>: Speak to others in the room\n\
      - inventory/inv: Check your inventory\n\
      - quit: Exit the game\n\

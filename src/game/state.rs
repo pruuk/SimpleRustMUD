@@ -97,6 +97,49 @@ impl GameState {
         database::player_queries::get_players_in_room(&self.db, room_id).await
     }
 
+    pub async fn add_exit(&self, room_id: &str, direction: &str, destination_id: &str) -> Result<(), String> {
+        // Verify both rooms exist
+        self.get_room(room_id).await?;
+        self.get_room(destination_id).await?;
+        
+        sqlx::query(
+            "INSERT OR REPLACE INTO room_exits (room_id, direction, destination_id) VALUES (?, ?, ?)"
+        )
+        .bind(room_id)
+        .bind(direction.to_lowercase())
+        .bind(destination_id)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("Failed to add exit: {}", e))?;
+        
+        Ok(())
+    }
+    
+    pub async fn get_exits(&self, room_id: &str) -> Result<Vec<(String, String)>, String> {
+        let exits: Vec<(String, String)> = sqlx::query_as(
+            "SELECT direction, destination_id FROM room_exits WHERE room_id = ?"
+        )
+        .bind(room_id)
+        .fetch_all(&self.db)
+        .await
+        .map_err(|e| format!("Failed to get exits: {}", e))?;
+        
+        Ok(exits)
+    }
+    
+    pub async fn move_player_to_room(&self, player_id: &str, new_room_id: &str) -> Result<(), String> {
+        self.get_room(new_room_id).await?;
+        
+        sqlx::query("UPDATE players SET current_location = ? WHERE id = ?")
+            .bind(new_room_id)
+            .bind(player_id)
+            .execute(&self.db)
+            .await
+            .map_err(|e| format!("Failed to move player: {}", e))?;
+        
+        Ok(())
+    }    
+
     pub async fn create_object(
         &self,
         name: &str,

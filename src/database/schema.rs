@@ -39,6 +39,22 @@ pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::err
     // Create starting room if it doesn't exist
     create_starting_room(db).await?;
 
+    // create exits table for room exits
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS room_exits (
+            room_id TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            destination_id TEXT NOT NULL,
+            PRIMARY KEY (room_id, direction),
+            FOREIGN KEY (room_id) REFERENCES game_objects(id),
+            FOREIGN KEY (destination_id) REFERENCES game_objects(id)
+        )
+        "#,
+    )
+    .execute(db)
+    .await?;    
+
     Ok(())
 }
 
