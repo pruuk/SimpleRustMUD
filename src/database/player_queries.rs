@@ -17,6 +17,7 @@ pub async fn create_player(
     .bind(&player.username)
     .bind(&player.password_hash)
     .bind(&player.current_location)
+    .bind(&player.is_admin)
     .bind(player.created_at)
     .execute(db)
     .await

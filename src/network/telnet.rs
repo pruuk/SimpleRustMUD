@@ -76,7 +76,9 @@ pub async fn handle_telnet_client(
             let mut password = String::new();
             reader.read_line(&mut password).await?;
 
-            match state.register_player(username.trim(), password.trim()).await {
+            let is_admin = 0;
+
+            match state.register_player(username.trim(), password.trim(), is_admin).await {
                 Ok(p) => {
                     writer.write_all(b"Registration successful!\n").await?;
                     p

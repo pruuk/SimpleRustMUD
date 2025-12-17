@@ -1,6 +1,8 @@
 // Database schema creation
 
 use sqlx::SqlitePool;
+use crate::database::player_queries;
+
 
 pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
     // Create players table
@@ -11,6 +13,7 @@ pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::err
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             current_location TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0,
             created_at INTEGER NOT NULL
         )
         "#,
@@ -38,6 +41,9 @@ pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::err
 
     // Create starting room if it doesn't exist
     create_starting_room(db).await?;
+
+    // Create admin if they don't exist
+    create_starting_admin(db).await?;
 
     // create exits table for room exits
     sqlx::query(
@@ -87,3 +93,52 @@ async fn create_starting_room(db: &SqlitePool) -> Result<(), Box<dyn std::error:
 
     Ok(())
 }
+
+async fn create_starting_admin(db: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
+    let username = "admin";
+    let admin_exists: Option<(i64,)> = sqlx::query_as(
+        "SELECT COUNT(*) FROM players WHERE username = ?"
+    )
+    .bind(username)
+    .fetch_optional(db)
+    .await?;
+
+    if admin_exists.map(|r| r.0).unwrap_or(0) == 0 {
+        use argon2::{
+            password_hash::{
+                rand_core::OsRng,
+                PasswordHash, PasswordHasher, PasswordVerifier, SaltString
+            },
+            Argon2
+        };
+        let id = "admin";
+        let username = "admin";
+        let password = "12345";
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = argon2::Argon2::default();
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| format!("Password hashing failed: {}", e))?
+            .to_string();
+        let is_admin = 1; 
+        
+        sqlx::query(
+            r#"
+            INSERT INTO players (id, username, password_hash, current_location, is_admin, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(id)
+        .bind(username)
+        .bind(password_hash)
+        .bind("room_start")
+        .bind(is_admin)
+        .bind(chrono::Utc::now().timestamp())
+        .execute(db)
+        .await?;
+    }
+
+    Ok(())
+}
+
+

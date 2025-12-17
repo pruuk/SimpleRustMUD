@@ -60,7 +60,7 @@ impl GameState {
         }
     }
 
-    pub async fn register_player(&self, username: &str, password: &str) -> Result<Player, String> {
+    pub async fn register_player(&self, username: &str, password: &str, is_admin: i64) -> Result<Player, String> {
         use argon2::{
             password_hash::{
                 rand_core::OsRng,
@@ -78,6 +78,7 @@ impl GameState {
             Uuid::new_v4().to_string(),
             username.to_string(),
             password_hash,
+            is_admin,
         );
 
         database::player_queries::create_player(&self.db, &player).await?;

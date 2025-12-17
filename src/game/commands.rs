@@ -20,17 +20,117 @@ pub async fn process_command(state: Arc<GameState>, player_id: &str, cmd: &str) 
         "down" | "d" => handle_move(state, player_id, "down").await,
         "say" => handle_say(state, player_id, &parts).await,
         "inventory" | "inv" => handle_inventory(state, player_id).await,
+        "@dig" => handle_admin_dig(state, player_id, &parts).await,
+        "@create" => handle_admin_create(state, player_id, &parts).await,
+        "@desc" => handle_admin_desc(state, player_id, &parts).await,
         "help" => handle_help().await,
         "quit" => "Goodbye!\n".to_string(),
         _ => "Unknown command. Type 'help' for available commands.\n".to_string(),
     }
 }
 
+// admin commands
+async fn handle_admin_dig(state: Arc<GameState>, player_id: &str, parts: &[&str]) -> String {
+    let player = player_queries::get_player_by_id(&state.db, player_id)
+        .await
+        .unwrap();
+    
+    if player.is_admin == 0 {
+        return "You don't have permission to do that.\n".to_string();
+    }
+    
+    if parts.len() < 4 {
+        return "Usage: @dig <direction> <room_name> <room_description>\n".to_string();
+    }
+    
+    let direction_input = parts[1];
+    let room_name = parts[2];
+    let room_desc = parts[3..].join(" ");
+
+    // parse direction to ensure full string in room exits
+    let direction = match direction_input {
+        "north" | "n" => "north",
+        "south" | "s" => "south",
+        "east" | "e" => "east",
+        "west" | "w" => "west",
+        "up" | "u" => "up",
+        "down" | "d" => "down",
+        _ => "enter",
+    };
+    
+    // Create new room
+    let new_room = state.create_object(room_name, &room_desc, "room", None).await.unwrap();
+    
+    // Add exit from current room to new room
+    state.add_exit(&player.current_location, direction, &new_room.id).await.unwrap();
+    
+    // Add return exit
+    let opposite = match direction {
+        "north" | "n" => "south",
+        "south" | "s" => "north",
+        "east" | "e" => "west",
+        "west" | "w" => "east",
+        "up" | "u" => "down",
+        "down" | "d" => "up",
+        _ => "back",
+    };
+    state.add_exit(&new_room.id, opposite, &player.current_location).await.unwrap();
+    
+    format!("Room created! Exit '{}' added.\n", direction)
+}
+
+async fn handle_admin_create(state: Arc<GameState>, player_id: &str, parts: &[&str]) -> String {
+    let player = player_queries::get_player_by_id(&state.db, player_id)
+        .await
+        .unwrap();
+    
+    if player.is_admin == 0 {
+        return "You don't have permission to do that.\n".to_string();
+    }
+    
+    if parts.len() < 3 {
+        return "Usage: @create <item_name> <description>\n".to_string();
+    }
+    
+    let item_name = parts[1];
+    let item_desc = parts[2..].join(" ");
+    
+    // Create item in current room
+    state.create_object(item_name, &item_desc, "item", Some(&player.current_location)).await.unwrap();
+    
+    format!("Created '{}'.\n", item_name)
+}
+
+async fn handle_admin_desc(state: Arc<GameState>, player_id: &str, parts: &[&str]) -> String {
+    let player = player_queries::get_player_by_id(&state.db, player_id)
+        .await
+        .unwrap();
+    
+    if player.is_admin == 0 {
+        return "You don't have permission to do that.\n".to_string();
+    }
+    
+    if parts.len() < 2 {
+        return "Usage: @desc <new description>\n".to_string();
+    }
+    
+    let new_desc = parts[1..].join(" ");
+    
+    sqlx::query("UPDATE game_objects SET description = ? WHERE id = ?")
+        .bind(new_desc)
+        .bind(&player.current_location)
+        .execute(&state.db)
+        .await
+        .unwrap();
+    
+    "Room description updated.\n".to_string()
+}
+
+// regular commands
 async fn handle_look(state: Arc<GameState>, player_id: &str) -> String {
     let player = player_queries::get_player_by_id(&state.db, player_id)
         .await
         .unwrap();
-
     let room = state.get_room(&player.current_location).await.unwrap();
     let objects = state.get_objects_in_container(&room.id).await.unwrap();
     let players = state.get_players_in_room(&room.id).await.unwrap();
@@ -129,5 +229,11 @@ async fn handle_help() -> String {
      - say <message>: Speak to others in the room\n\
      - inventory/inv: Check your inventory\n\
      - quit: Exit the game\n\
-     - help: Show this message\n".to_string()
+     - help: Show this message\n
+     
+     Admin ONLY commands:\n\
+     - @dig: Creates a new room. Usage: @ dig <direction> <room_name> <room_description>\n\
+     - @create: Creates a new object. Usage: @create <item_name> <description>\n\
+     - #desc: Updates current room's description. Usage: @desc <description>\n".to_string()
+
 }
