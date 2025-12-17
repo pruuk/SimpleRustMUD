@@ -79,7 +79,7 @@ impl GameState {
             username.to_string(),
             password_hash,
             is_admin,
-        );
+        ).await;
 
         database::player_queries::create_player(&self.db, &player).await?;
 

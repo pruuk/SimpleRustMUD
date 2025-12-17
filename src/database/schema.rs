@@ -14,7 +14,22 @@ pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::err
             password_hash TEXT NOT NULL,
             current_location TEXT NOT NULL,
             is_admin INTEGER DEFAULT 0,
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            Dexterity INTEGER DEFAULT 100,
+            Strength INTEGER DEFAULT 100,
+            Vitality INTEGER DEFAULT 100,
+            Perception INTEGER DEFAULT 100,
+            Willpower INTEGER DEFAULT 100,
+            Charisma INTEGER DEFAULT 100,
+            current_health INTEGER DEFAULT 500,
+            max_health INTEGER DEFAULT 500,
+            current_stamina INTEGER DEFAULT 500,
+            max_stamina INTEGER DEFAULT 500,
+            initiative INTEGER DEFAULT 100,
+            physical_defense INTEGER DEFAULT 100,
+            physical_armor INTEGER DEFAULT 0,
+            mystical_defense INTEGER DEFAULT 100,
+            mystical_armor INTEGER DEFAULT 0
         )
         "#,
     )

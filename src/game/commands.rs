@@ -20,6 +20,7 @@ pub async fn process_command(state: Arc<GameState>, player_id: &str, cmd: &str) 
         "down" | "d" => handle_move(state, player_id, "down").await,
         "say" => handle_say(state, player_id, &parts).await,
         "inventory" | "inv" => handle_inventory(state, player_id).await,
+        "stats" | "att" | "score" => handle_stats(state, player_id).await,
         "@dig" => handle_admin_dig(state, player_id, &parts).await,
         "@create" => handle_admin_create(state, player_id, &parts).await,
         "@desc" => handle_admin_desc(state, player_id, &parts).await,
@@ -222,12 +223,41 @@ async fn handle_inventory(state: Arc<GameState>, player_id: &str) -> String {
     }
 }
 
+async fn handle_stats(state: Arc<GameState>, player_id: &str) -> String {
+    let player = player_queries::get_player_by_id(&state.db, player_id)
+        .await
+        .unwrap();
+
+    format!(
+        "\n{}'s Stats\n\
+        ================\n\
+        Health: {}/{}\n\
+        Stamina: {}/{}\n\
+        Dexterity: {}\n\
+        Strength: {}\n\
+        Vitality: {}\n\
+        Perception: {}\n\
+        Willpower: {}\n\
+        Charisma: {}\n",
+        player.username,
+        player.current_health, player.max_health,
+        player.current_stamina, player.max_stamina,
+        player.Dexterity,
+        player.Strength,
+        player.Vitality,
+        player.Perception,
+        player.Willpower,
+        player.Charisma
+    )
+}
+
 async fn handle_help() -> String {
     "Available commands:\n\
      - look: Examine your surroundings\n\
      - move: type in a direction such as 'west' or 'w' if an exit exists\n\
      - say <message>: Speak to others in the room\n\
      - inventory/inv: Check your inventory\n\
+     - stats/att/score: Check your player stats\n\
      - quit: Exit the game\n\
      - help: Show this message\n
      
