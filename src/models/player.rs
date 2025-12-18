@@ -14,12 +14,12 @@ pub struct Player {
     pub created_at: i64,
 
     // Player attributes
-    pub Dexterity: i64, // Coordination and speed
-    pub Strength: i64, // raw physical power
-    pub Vitality: i64, // Health and resistance to physical afflictions
-    pub Perception: i64, // Noticing stuff, ability to learn quickly
-    pub Willpower: i64, // Mental resistance, affects health
-    pub Charisma: i64, // Strength of personality, social interactions
+    pub dexterity: i64, // Coordination and speed
+    pub strength: i64, // raw physical power
+    pub vitality: i64, // Health and resistance to physical afflictions
+    pub perception: i64, // Noticing stuff, ability to learn quickly
+    pub willpower: i64, // Mental resistance, affects health
+    pub charisma: i64, // Strength of personality, social interactions
 
     // Derived player stats
     pub current_health: i64,
@@ -46,12 +46,12 @@ impl Player {
             created_at: chrono::Utc::now().timestamp(),
 
             // rolled player attributes
-            Dexterity: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
-            Strength: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
-            Vitality: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
-            Perception: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
-            Willpower: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
-            Charisma: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            dexterity: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            strength: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            vitality: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            perception: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            willpower: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
+            charisma: dice_rolls::random_distribution_roll_result(100.0, 10.0).await,
 
             // derived player stats, setting defaults to start
             current_health: 500,

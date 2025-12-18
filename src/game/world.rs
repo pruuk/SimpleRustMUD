@@ -3,7 +3,7 @@
 // Future world-building utilities
 // Examples: procedural generation, area management, etc.
 
-use crate::game::GameState;
+// use crate::game::GameState;
 
 pub struct WorldBuilder {
     // Add world building state here

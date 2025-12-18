@@ -242,12 +242,12 @@ async fn handle_stats(state: Arc<GameState>, player_id: &str) -> String {
         player.username,
         player.current_health, player.max_health,
         player.current_stamina, player.max_stamina,
-        player.Dexterity,
-        player.Strength,
-        player.Vitality,
-        player.Perception,
-        player.Willpower,
-        player.Charisma
+        player.dexterity,
+        player.strength,
+        player.vitality,
+        player.perception,
+        player.willpower,
+        player.charisma
     )
 }
 

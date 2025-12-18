@@ -1,7 +1,7 @@
 // Database schema creation
 
 use sqlx::SqlitePool;
-use crate::database::player_queries;
+// use crate::database::player_queries;
 
 
 pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
@@ -15,12 +15,12 @@ pub async fn initialize_database(db: &SqlitePool) -> Result<(), Box<dyn std::err
             current_location TEXT NOT NULL,
             is_admin INTEGER DEFAULT 0,
             created_at INTEGER NOT NULL,
-            Dexterity INTEGER DEFAULT 100,
-            Strength INTEGER DEFAULT 100,
-            Vitality INTEGER DEFAULT 100,
-            Perception INTEGER DEFAULT 100,
-            Willpower INTEGER DEFAULT 100,
-            Charisma INTEGER DEFAULT 100,
+            dexterity INTEGER DEFAULT 100,
+            strength INTEGER DEFAULT 100,
+            vitality INTEGER DEFAULT 100,
+            perception INTEGER DEFAULT 100,
+            willpower INTEGER DEFAULT 100,
+            charisma INTEGER DEFAULT 100,
             current_health INTEGER DEFAULT 500,
             max_health INTEGER DEFAULT 500,
             current_stamina INTEGER DEFAULT 500,
@@ -122,7 +122,7 @@ async fn create_starting_admin(db: &SqlitePool) -> Result<(), Box<dyn std::error
         use argon2::{
             password_hash::{
                 rand_core::OsRng,
-                PasswordHash, PasswordHasher, PasswordVerifier, SaltString
+                PasswordHasher, SaltString
             },
             Argon2
         };

@@ -9,8 +9,8 @@ pub async fn create_player(
 ) -> Result<(), String> {
     sqlx::query(
         r#"
-        INSERT INTO players (id, username, password_hash, current_location, created_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO players (id, username, password_hash, current_location, created_at, dexterity, strength, vitality, perception, willpower, charisma)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#,
     )
     .bind(&player.id)
@@ -19,6 +19,12 @@ pub async fn create_player(
     .bind(&player.current_location)
     .bind(&player.is_admin)
     .bind(player.created_at)
+    .bind(&player.dexterity)
+    .bind(&player.strength)
+    .bind(&player.vitality)
+    .bind(&player.perception)
+    .bind(&player.willpower)
+    .bind(&player.charisma)
     .execute(db)
     .await
     .map_err(|e| format!("Failed to create player: {}", e))?;

@@ -13,3 +13,6 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = "0.4"
 rand = "0.9.2"
 rand_distr = "0.5.1"
+axum = { version = "0.8.7", features = ["ws"] }
+tower-http = "0.6.8"
+tokio-tungstenite = "0.28.0"
